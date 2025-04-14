@@ -1,0 +1,9 @@
+﻿{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "DebugRoslynSourceGenerator": {
+      "commandName": "DebugRoslynComponent",
+      "targetProject": "../Zooper.Cheetah.Generators.Sample/Zooper.Cheetah.Generators.Sample.csproj"
+    }
+  }
+}

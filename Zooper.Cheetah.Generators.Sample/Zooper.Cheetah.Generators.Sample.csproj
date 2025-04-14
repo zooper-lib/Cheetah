@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+        <RootNamespace>Zooper.Cheetah.Generators.Sample</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Zooper.Cheetah.Attributes\Zooper.Cheetah.Attributes.csproj" />
+        <ProjectReference Include="..\Zooper.Cheetah.Generators.AzureServiceBus\Zooper.Cheetah.Generators.AzureServiceBus.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+        <ProjectReference Include="..\Zooper.Cheetah.Generators.RabbitMq\Zooper.Cheetah.Generators.RabbitMq.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+        <ProjectReference Include="..\Zooper.Cheetah.Generators\Zooper.Cheetah.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="MassTransit" Version="8.4.0" />
+      <PackageReference Include="MassTransit.Abstractions" Version="8.4.0" />
+      <PackageReference Include="MassTransit.RabbitMQ" Version="8.4.0" />
+      <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.18.4" />
+      <PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="8.4.0" />
+    </ItemGroup>
+
+</Project>
