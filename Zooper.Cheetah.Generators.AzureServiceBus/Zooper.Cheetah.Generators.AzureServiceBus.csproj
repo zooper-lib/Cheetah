@@ -30,11 +30,13 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Zooper.Cheetah.Attributes\Zooper.Cheetah.Attributes.csproj">
-            <PrivateAssets>all</PrivateAssets>
+            <PrivateAssets>none</PrivateAssets>
+            <IncludeAssets>all</IncludeAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </ProjectReference>
         <ProjectReference Include="..\Zooper.Cheetah.Generators\Zooper.Cheetah.Generators.csproj">
-            <PrivateAssets>all</PrivateAssets>
+            <PrivateAssets>none</PrivateAssets>
+            <IncludeAssets>all</IncludeAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </ProjectReference>
     </ItemGroup>
