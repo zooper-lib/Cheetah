@@ -6,6 +6,7 @@ using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
+using System.IO;
 
 namespace Zooper.Cheetah.Generators.AzureServiceBus;
 
@@ -13,10 +14,10 @@ namespace Zooper.Cheetah.Generators.AzureServiceBus;
 public sealed class ConsumerConnectionGenerator : IIncrementalGenerator
 {
 	private const string FileName = "MassTransitConsumerConnection";
-	private const string Namespace = "ZEA.MassTransit.AzureServiceBus.Generated";
+	private const string Namespace = "Zooper.Cheetah.Generators.Sample";
 	private const string ClassName = "MassTransitConsumerConnection";
 	private const string MethodName = "ConfigureSubscriptions";
-	private const string ConsumerAttributeName = "ZEA.Communications.Messaging.MassTransit.Attributes.ConsumerAttribute";
+	private const string ConsumerAttributeName = "Zooper.Cheetah.Attributes.ConsumerAttribute";
 
 	public void Initialize(IncrementalGeneratorInitializationContext context)
 	{
@@ -26,7 +27,7 @@ public sealed class ConsumerConnectionGenerator : IIncrementalGenerator
 				predicate: IsSyntaxTargetForGeneration, // Filter syntax nodes
 				transform: GetSemanticTargetForGeneration // Transform to semantic symbols
 			)
-			.Where(static classSymbol => classSymbol != null); // Filter out nulls
+			.Where(static classSymbol => classSymbol != null)!; // Filter out nulls
 
 		// Combine the compilation with the collected consumer symbols
 		var compilationAndConsumers = context.CompilationProvider.Combine(consumerClasses.Collect());
@@ -88,15 +89,56 @@ public sealed class ConsumerConnectionGenerator : IIncrementalGenerator
 		ImmutableArray<INamedTypeSymbol?> consumers,
 		SourceProductionContext context)
 	{
+		context.ReportDiagnostic(
+			Diagnostic.Create(
+				new DiagnosticDescriptor(
+					"ZEA001",
+					"Starting generation",
+					"Starting generation process",
+					"Generation",
+					DiagnosticSeverity.Warning,
+					true
+				),
+				Location.None
+			)
+		);
+
 		if (consumers.IsDefaultOrEmpty)
+		{
+			context.ReportDiagnostic(
+				Diagnostic.Create(
+					new DiagnosticDescriptor(
+						"ZEA002",
+						"No consumers",
+						"No consumers found in compilation",
+						"Generation",
+						DiagnosticSeverity.Warning,
+						true
+					),
+					Location.None
+				)
+			);
 			return;
+		}
 
 		// Retrieve the ConsumerAttribute symbol using fully qualified string name
 		var consumerAttributeSymbol = compilation.GetTypeByMetadataName(ConsumerAttributeName);
 
 		if (consumerAttributeSymbol == null)
 		{
-			// Attribute not found; nothing to generate
+			context.ReportDiagnostic(
+				Diagnostic.Create(
+					new DiagnosticDescriptor(
+						"ZEA003",
+						"Attribute not found",
+						$"Could not find attribute {ConsumerAttributeName}",
+						"Generation",
+						DiagnosticSeverity.Error,
+						true
+					),
+					Location.None
+				)
+			);
 			return;
 		}
 
@@ -105,7 +147,19 @@ public sealed class ConsumerConnectionGenerator : IIncrementalGenerator
 
 		if (consumerInterfaceSymbol == null)
 		{
-			// IConsumer<T> interface not found; ensure MassTransit is referenced
+			context.ReportDiagnostic(
+				Diagnostic.Create(
+					new DiagnosticDescriptor(
+						"ZEA004",
+						"IConsumer not found",
+						"Could not find MassTransit.IConsumer`1 interface",
+						"Generation",
+						DiagnosticSeverity.Error,
+						true
+					),
+					Location.None
+				)
+			);
 			return;
 		}
 
@@ -114,15 +168,44 @@ public sealed class ConsumerConnectionGenerator : IIncrementalGenerator
 
 		foreach (var classSymbol in consumers.Distinct())
 		{
-			if (classSymbol is null)
+			if (classSymbol == null)
 				continue;
 
-			// Retrieve the ConsumerAttribute data using fully qualified string name
+			context.ReportDiagnostic(
+				Diagnostic.Create(
+					new DiagnosticDescriptor(
+						"ZEA005",
+						"Processing consumer",
+						$"Processing consumer: {classSymbol.ToDisplayString()}",
+						"Generation",
+						DiagnosticSeverity.Info,
+						true
+					),
+					Location.None
+				)
+			);
+
+			// Retrieve the ConsumerAttribute data using symbol comparison
 			var attributeData = classSymbol.GetAttributes()
 				.FirstOrDefault(ad => SymbolEqualityComparer.Default.Equals(ad.AttributeClass, consumerAttributeSymbol));
 
 			if (attributeData == null)
+			{
+				context.ReportDiagnostic(
+					Diagnostic.Create(
+						new DiagnosticDescriptor(
+							"ZEA006",
+							"No attribute",
+							$"No ConsumerAttribute found on {classSymbol.ToDisplayString()}",
+							"Generation",
+							DiagnosticSeverity.Warning,
+							true
+						),
+						Location.None
+					)
+				);
 				continue;
+			}
 
 			// Extract attribute arguments
 			var entityName = attributeData.ConstructorArguments.Length > 0 ? attributeData.ConstructorArguments[0].Value as string : null;
@@ -131,7 +214,22 @@ public sealed class ConsumerConnectionGenerator : IIncrementalGenerator
 				: null;
 
 			if (entityName is null || subscriptionName is null)
+			{
+				context.ReportDiagnostic(
+					Diagnostic.Create(
+						new DiagnosticDescriptor(
+							"ZEA007",
+							"Invalid attribute arguments",
+							$"Invalid attribute arguments on {classSymbol.ToDisplayString()}",
+							"Generation",
+							DiagnosticSeverity.Warning,
+							true
+						),
+						Location.None
+					)
+				);
 				continue;
+			}
 
 			consumerInfos.Add(
 				new ConsumerInfo
@@ -141,10 +239,39 @@ public sealed class ConsumerConnectionGenerator : IIncrementalGenerator
 					SubscriptionName = subscriptionName
 				}
 			);
+
+			context.ReportDiagnostic(
+				Diagnostic.Create(
+					new DiagnosticDescriptor(
+						"ZEA008",
+						"Added consumer",
+						$"Added consumer {classSymbol.ToDisplayString()} with channel {entityName} and subscription {subscriptionName}",
+						"Generation",
+						DiagnosticSeverity.Info,
+						true
+					),
+					Location.None
+				)
+			);
 		}
 
 		if (consumerInfos.Count == 0)
+		{
+			context.ReportDiagnostic(
+				Diagnostic.Create(
+					new DiagnosticDescriptor(
+						"ZEA009",
+						"No valid consumers",
+						"No valid consumers found",
+						"Generation",
+						DiagnosticSeverity.Warning,
+						true
+					),
+					Location.None
+				)
+			);
 			return;
+		}
 
 		// Generate the registration code
 		var sourceBuilder = new StringBuilder();
@@ -153,8 +280,38 @@ public sealed class ConsumerConnectionGenerator : IIncrementalGenerator
 		AppendNamespace(sourceBuilder);
 		AppendClass(sourceBuilder, consumerInfos);
 
+		var source = sourceBuilder.ToString();
+
+		context.ReportDiagnostic(
+			Diagnostic.Create(
+				new DiagnosticDescriptor(
+					"ZEA010",
+					"Generated source",
+					$"Generated source code:\n{source}",
+					"Generation",
+					DiagnosticSeverity.Info,
+					true
+				),
+				Location.None
+			)
+		);
+
 		// Add the generated source to the compilation
-		context.AddSource($"{FileName}.g.cs", SourceText.From(sourceBuilder.ToString(), Encoding.UTF8));
+		context.AddSource($"{FileName}.g.cs", SourceText.From(source, Encoding.UTF8));
+
+		context.ReportDiagnostic(
+			Diagnostic.Create(
+				new DiagnosticDescriptor(
+					"ZEA011",
+					"Source added",
+					$"Added source file {FileName}.g.cs",
+					"Generation",
+					DiagnosticSeverity.Info,
+					true
+				),
+				Location.None
+			)
+		);
 	}
 
 	private static void AppendUsings(StringBuilder sourceBuilder)
