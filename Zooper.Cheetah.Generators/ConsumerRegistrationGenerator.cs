@@ -16,13 +16,13 @@ public class ConsumerRegistrationGenerator : IIncrementalGenerator
 
 	public void Initialize(IncrementalGeneratorInitializationContext context)
 	{
-		// Register a syntax provider that filters for class declarations with ConsumerAttribute
+		// Register a syntax provider that filters for class declarations with attributes
 		var consumerClasses = context.SyntaxProvider
-			.CreateSyntaxProvider(
-				predicate: IsCandidateClass, // Filter syntax nodes
-				transform: GetSemanticTarget // Transform to semantic symbols
-			)
-			.Where(static classSymbol => classSymbol != null)!; // Filter out nulls
+			.ForAttributeWithMetadataName(
+				"Zooper.Cheetah.Attributes.ConsumerAttribute",
+				(node, _) => node is ClassDeclarationSyntax,
+				(context, _) => (INamedTypeSymbol)context.TargetSymbol
+			);
 
 		// Combine the compilation with the collected consumer symbols
 		var compilationAndConsumers = context.CompilationProvider.Combine(consumerClasses.Collect());
@@ -30,52 +30,8 @@ public class ConsumerRegistrationGenerator : IIncrementalGenerator
 		// Register the source output
 		context.RegisterSourceOutput(
 			compilationAndConsumers,
-			(
-				spc,
-				source) => Execute(source.Left, source.Right, spc)
+			(spc, source) => Execute(source.Left, source.Right, spc)
 		);
-	}
-
-	/// <summary>
-	/// Predicate to identify candidate classes with ConsumerAttribute.
-	/// </summary>
-	private static bool IsCandidateClass(
-		SyntaxNode node,
-		CancellationToken cancellationToken)
-	{
-		return node is ClassDeclarationSyntax { AttributeLists.Count: > 0 };
-	}
-
-	/// <summary>
-	/// Transforms a syntax node into a semantic symbol if it has ConsumerAttribute.
-	/// </summary>
-	private static INamedTypeSymbol? GetSemanticTarget(
-		GeneratorSyntaxContext context,
-		CancellationToken cancellationToken)
-	{
-		var classDeclaration = (ClassDeclarationSyntax)context.Node;
-		var classSymbol = context.SemanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken) as INamedTypeSymbol;
-
-		if (classSymbol == null)
-			return null;
-
-		var consumerAttributeSymbol = context.SemanticModel.Compilation.GetTypeByMetadataName(ConsumerNameAttribute);
-		if (consumerAttributeSymbol == null)
-			return null;
-
-		// Check if the class has the ConsumerAttribute using symbol comparison
-		foreach (var attribute in classSymbol.GetAttributes())
-		{
-			if (attribute.AttributeClass == null)
-				continue;
-
-			if (SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, consumerAttributeSymbol))
-			{
-				return classSymbol;
-			}
-		}
-
-		return null;
 	}
 
 	/// <summary>
@@ -83,62 +39,92 @@ public class ConsumerRegistrationGenerator : IIncrementalGenerator
 	/// </summary>
 	private static void Execute(
 		Compilation compilation,
-		ImmutableArray<INamedTypeSymbol?> consumers,
+		ImmutableArray<INamedTypeSymbol> consumers,
 		SourceProductionContext context)
 	{
+		context.ReportDiagnostic(Diagnostic.Create(
+			new DiagnosticDescriptor(
+				"ZER001",
+				"Generator Execution",
+				"Executing ConsumerRegistrationGenerator",
+				"Generation",
+				DiagnosticSeverity.Info,
+				true),
+			Location.None));
+
 		if (consumers.IsDefaultOrEmpty)
-			return;
-
-		// Retrieve the ConsumerAttribute symbol using fully qualified string name
-		var consumerAttributeSymbol = compilation.GetTypeByMetadataName(ConsumerNameAttribute);
-
-		if (consumerAttributeSymbol == null)
 		{
-			// Attribute not found; nothing to generate
+			context.ReportDiagnostic(Diagnostic.Create(
+				new DiagnosticDescriptor(
+					"ZER002",
+					"No Consumers",
+					"No consumers found to register",
+					"Generation",
+					DiagnosticSeverity.Info,
+					true),
+				Location.None));
 			return;
 		}
+
+		context.ReportDiagnostic(Diagnostic.Create(
+			new DiagnosticDescriptor(
+				"ZER003",
+				"Found Consumers",
+				$"Found {consumers.Length} consumer(s) to register",
+				"Generation",
+				DiagnosticSeverity.Info,
+				true),
+			Location.None));
 
 		// Retrieve the IConsumer<T> symbol from MassTransit
 		var consumerInterfaceSymbol = compilation.GetTypeByMetadataName("MassTransit.IConsumer`1");
 
 		if (consumerInterfaceSymbol == null)
 		{
-			// IConsumer<T> interface not found; ensure MassTransit is referenced
+			context.ReportDiagnostic(Diagnostic.Create(
+				new DiagnosticDescriptor(
+					"ZER004",
+					"Missing Dependency",
+					"MassTransit.IConsumer<T> interface not found. Ensure MassTransit is referenced.",
+					"Generation",
+					DiagnosticSeverity.Warning,
+					true),
+				Location.None));
 			return;
 		}
 
 		// Collect all consumer information
 		var consumerInfos = new List<ConsumerInfo>();
 
-		foreach (var classSymbol in consumers.Distinct())
+		foreach (var classSymbol in consumers)
 		{
-			if (classSymbol == null)
-				continue;
-
-			// Retrieve the ConsumerAttribute data using symbol comparison
-			var attributeData = classSymbol.GetAttributes()
-				.FirstOrDefault(ad => SymbolEqualityComparer.Default.Equals(ad.AttributeClass, consumerAttributeSymbol));
-
-			if (attributeData == null)
-				continue;
-
-			// Extract attribute arguments
-			var entityName = attributeData.ConstructorArguments.Length > 0 ? attributeData.ConstructorArguments[0].Value as string : null;
-			var subscriptionName = attributeData.ConstructorArguments.Length > 1
-				? attributeData.ConstructorArguments[1].Value as string
-				: null;
-
-			if (entityName is null || subscriptionName is null)
-				continue;
+			context.ReportDiagnostic(Diagnostic.Create(
+				new DiagnosticDescriptor(
+					"ZER005",
+					"Processing Consumer",
+					$"Processing consumer: {classSymbol.ToDisplayString()}",
+					"Generation",
+					DiagnosticSeverity.Info,
+					true),
+				Location.None));
 
 			// Get the message type from IConsumer<T>
 			var interfaceType = classSymbol.AllInterfaces.FirstOrDefault(
-				i =>
-					SymbolEqualityComparer.Default.Equals(i.OriginalDefinition, consumerInterfaceSymbol)
-			);
+				i => SymbolEqualityComparer.Default.Equals(i.OriginalDefinition, consumerInterfaceSymbol));
 
 			if (interfaceType == null || interfaceType.TypeArguments.Length != 1)
+			{
+				context.ReportDiagnostic(Diagnostic.Create(
+					new DiagnosticDescriptor(
+						"ZER006",
+						"Invalid Consumer",
+						$"Consumer {classSymbol.ToDisplayString()} does not implement IConsumer<T>",
+						"Generation",
+						DiagnosticSeverity.Warning,
+						true),
+					Location.None));
 				continue;
+			}
 
 			var messageType = interfaceType.TypeArguments[0];
 			var messageTypeName = messageType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
@@ -147,9 +133,7 @@ public class ConsumerRegistrationGenerator : IIncrementalGenerator
 				new ConsumerInfo
 				{
 					ClassName = classSymbol.ToDisplayString(),
-					InterfaceName = messageTypeName,
-					EntityName = entityName,
-					SubscriptionName = subscriptionName
+					InterfaceName = messageTypeName
 				}
 			);
 		}
@@ -158,6 +142,15 @@ public class ConsumerRegistrationGenerator : IIncrementalGenerator
 		if (consumerInfos.Count > 0)
 		{
 			var source = GenerateSource(consumerInfos);
+			context.ReportDiagnostic(Diagnostic.Create(
+				new DiagnosticDescriptor(
+					"ZER007",
+					"Generated Source",
+					$"Generated source for {consumerInfos.Count} consumer(s)",
+					"Generation",
+					DiagnosticSeverity.Info,
+					true),
+				Location.None));
 			context.AddSource("ConsumerRegistration.g.cs", SourceText.From(source, Encoding.UTF8));
 		}
 	}
@@ -196,7 +189,5 @@ public class ConsumerRegistrationGenerator : IIncrementalGenerator
 	{
 		public string ClassName { get; set; } = string.Empty;
 		public string InterfaceName { get; set; } = string.Empty;
-		public string EntityName { get; set; } = string.Empty;
-		public string SubscriptionName { get; set; } = string.Empty;
 	}
 }

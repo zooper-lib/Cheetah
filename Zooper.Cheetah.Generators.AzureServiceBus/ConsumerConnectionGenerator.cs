@@ -56,7 +56,7 @@ public sealed class ConsumerConnectionGenerator : IIncrementalGenerator
 		// Register a syntax provider that filters for class declarations with attributes
 		var consumerClasses = context.SyntaxProvider
 			.ForAttributeWithMetadataName(
-				"Zooper.Cheetah.Attributes.Consumer",
+				"Zooper.Cheetah.Attributes.ConsumerAttribute",
 				(node, _) => node is ClassDeclarationSyntax,
 				(context, _) => (INamedTypeSymbol)context.TargetSymbol
 			);
