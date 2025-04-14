@@ -10,6 +10,11 @@
 
         <RootNamespace>Zooper.Cheetah.Generators.AzureServiceBus</RootNamespace>
         <PackageId>Zooper.Cheetah.Generators.AzureServiceBus</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>Your Name</Authors>
+        <Description>Source generator for Azure Service Bus message handling</Description>
+        <PackageTags>source-generator azure-service-bus</PackageTags>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     </PropertyGroup>
 
     <ItemGroup>
@@ -24,8 +29,14 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Zooper.Cheetah.Attributes\Zooper.Cheetah.Attributes.csproj" />
-        <ProjectReference Include="..\Zooper.Cheetah.Generators\Zooper.Cheetah.Generators.csproj" />
+        <ProjectReference Include="..\Zooper.Cheetah.Attributes\Zooper.Cheetah.Attributes.csproj">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </ProjectReference>
+        <ProjectReference Include="..\Zooper.Cheetah.Generators\Zooper.Cheetah.Generators.csproj">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </ProjectReference>
     </ItemGroup>
 
     <!-- This is required to include the analyzer in the package -->

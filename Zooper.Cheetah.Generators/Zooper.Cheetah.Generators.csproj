@@ -10,6 +10,11 @@
 
         <RootNamespace>Zooper.Cheetah.Generators</RootNamespace>
         <PackageId>Zooper.Cheetah.Generators</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>Your Name</Authors>
+        <Description>Source generators for Zooper.Cheetah</Description>
+        <PackageTags>source-generator</PackageTags>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     </PropertyGroup>
 
     <ItemGroup>
@@ -26,8 +31,12 @@
             <Visible>False</Visible>
         </None>
     </ItemGroup>
+
     <ItemGroup>
-      <ProjectReference Include="..\Zooper.Cheetah.Attributes\Zooper.Cheetah.Attributes.csproj" />
+        <ProjectReference Include="..\Zooper.Cheetah.Attributes\Zooper.Cheetah.Attributes.csproj">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </ProjectReference>
     </ItemGroup>
 
 </Project>
