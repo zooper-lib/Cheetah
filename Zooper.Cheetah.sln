@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zooper.Cheetah.Attributes",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zooper.Cheetah.Generators.AzureServiceBus", "Zooper.Cheetah.Generators.AzureServiceBus\Zooper.Cheetah.Generators.AzureServiceBus.csproj", "{E21A3F2E-FEE5-4CC2-AD43-FBAEA0E94CEA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zooper.Cheetah.Generators.RabbitMq", "Zooper.Cheetah.Generators.RabbitMq\Zooper.Cheetah.Generators.RabbitMq.csproj", "{3672EAB0-FE46-45A3-B456-E6B39C28190D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,9 @@ Global
 		{E21A3F2E-FEE5-4CC2-AD43-FBAEA0E94CEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E21A3F2E-FEE5-4CC2-AD43-FBAEA0E94CEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E21A3F2E-FEE5-4CC2-AD43-FBAEA0E94CEA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3672EAB0-FE46-45A3-B456-E6B39C28190D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3672EAB0-FE46-45A3-B456-E6B39C28190D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3672EAB0-FE46-45A3-B456-E6B39C28190D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3672EAB0-FE46-45A3-B456-E6B39C28190D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

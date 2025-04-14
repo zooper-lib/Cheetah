@@ -14,7 +14,7 @@ namespace Zooper.Cheetah.Generators.AzureServiceBus;
 public sealed class ConsumerConnectionGenerator : IIncrementalGenerator
 {
 	private const string FileName = "MassTransitConsumerConnection";
-	private const string Namespace = "Zooper.Cheetah.Generators.Sample";
+	private const string Namespace = "Zooper.Cheetah.Generators.AzureServiceBus";
 	private const string ClassName = "MassTransitConsumerConnection";
 	private const string MethodName = "ConfigureSubscriptions";
 	private const string ConsumerAttributeName = "Zooper.Cheetah.Attributes.ConsumerAttribute";

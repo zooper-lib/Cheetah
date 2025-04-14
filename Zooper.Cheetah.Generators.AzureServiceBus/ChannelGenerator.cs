@@ -12,9 +12,9 @@ namespace Zooper.Cheetah.Generators.AzureServiceBus;
 [Generator]
 public sealed class ChannelGenerator : IIncrementalGenerator
 {
-	private const string FileName = "ChannelRegistration";
+	private const string FileName = "MassTransitChannelRegistration";
 	private const string Namespace = "Zooper.Cheetah.Generators.AzureServiceBus";
-	private const string ClassName = "ChannelRegistration";
+	private const string ClassName = "MassTransitChannelRegistration";
 	private const string MethodName = "ConfigureChannels";
 	private const string ChannelAttributeName = "Zooper.Cheetah.Attributes.ChannelAttribute";
 

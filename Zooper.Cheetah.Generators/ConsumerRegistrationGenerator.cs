@@ -12,6 +12,10 @@ namespace Zooper.Cheetah.Generators;
 [Generator]
 public class ConsumerRegistrationGenerator : IIncrementalGenerator
 {
+	private const string FileName = "MassTransitConsumerRegistration";
+	private const string Namespace = "Zooper.Cheetah.Generators.Sample";
+	private const string ClassName = "MassTransitConsumerRegistration";
+	private const string MethodName = "RegisterConsumers";
 	private const string ConsumerNameAttribute = "Zooper.Cheetah.Attributes.ConsumerAttribute";
 
 	public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -151,7 +155,7 @@ public class ConsumerRegistrationGenerator : IIncrementalGenerator
 					DiagnosticSeverity.Info,
 					true),
 				Location.None));
-			context.AddSource("ConsumerRegistration.g.cs", SourceText.From(source, Encoding.UTF8));
+			context.AddSource($"{FileName}.g.cs", SourceText.From(source, Encoding.UTF8));
 		}
 	}
 
@@ -163,11 +167,11 @@ public class ConsumerRegistrationGenerator : IIncrementalGenerator
 		sb.AppendLine("using System.Collections.Generic;");
 		sb.AppendLine("using MassTransit;");
 		sb.AppendLine();
-		sb.AppendLine("namespace Zooper.Cheetah.Generators;");
+		sb.AppendLine($"namespace {Namespace};");
 		sb.AppendLine();
-		sb.AppendLine("public static class ConsumerRegistration");
+		sb.AppendLine($"public static class {ClassName}");
 		sb.AppendLine("{");
-		sb.AppendLine("    public static void RegisterConsumers(IBusRegistrationConfigurator configurator)");
+		sb.AppendLine($"    public static void {MethodName}(IBusRegistrationConfigurator configurator)");
 		sb.AppendLine("    {");
 
 		foreach (var info in consumerInfos)
