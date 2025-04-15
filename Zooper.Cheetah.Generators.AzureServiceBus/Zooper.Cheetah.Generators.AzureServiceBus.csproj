@@ -34,11 +34,11 @@
             <IncludeAssets>all</IncludeAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </ProjectReference>
-        <ProjectReference Include="..\Zooper.Cheetah.Generators\Zooper.Cheetah.Generators.csproj">
-            <PrivateAssets>none</PrivateAssets>
-            <IncludeAssets>all</IncludeAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </ProjectReference>
+<!--        <ProjectReference Include="..\Zooper.Cheetah.Generators\Zooper.Cheetah.Generators.csproj">-->
+<!--            <PrivateAssets>none</PrivateAssets>-->
+<!--            <IncludeAssets>all</IncludeAssets>-->
+<!--            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>-->
+<!--        </ProjectReference>-->
     </ItemGroup>
 
     <!-- This is required to include the analyzer in the package -->
