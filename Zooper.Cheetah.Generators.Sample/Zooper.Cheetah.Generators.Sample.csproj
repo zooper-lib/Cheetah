@@ -12,7 +12,6 @@
         <ProjectReference Include="..\Zooper.Cheetah.Attributes\Zooper.Cheetah.Attributes.csproj" />
         <ProjectReference Include="..\Zooper.Cheetah.Generators.AzureServiceBus\Zooper.Cheetah.Generators.AzureServiceBus.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
         <ProjectReference Include="..\Zooper.Cheetah.Generators.RabbitMq\Zooper.Cheetah.Generators.RabbitMq.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-        <ProjectReference Include="..\Zooper.Cheetah.Generators\Zooper.Cheetah.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     </ItemGroup>
 
     <ItemGroup>

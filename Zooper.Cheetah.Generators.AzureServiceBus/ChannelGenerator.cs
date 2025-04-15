@@ -18,69 +18,33 @@ public sealed class ChannelGenerator : IIncrementalGenerator
 	private const string MethodName = "ConfigureChannels";
 	private const string ChannelAttributeName = "Zooper.Cheetah.Attributes.ChannelAttribute";
 
+	// Diagnostic descriptors for logging
+	private static readonly DiagnosticDescriptor ExecutionInfo = new(
+		"ZER001",
+		"Generator Execution",
+		"{0}",
+		"Generation",
+		DiagnosticSeverity.Info,
+		true);
+
 	public void Initialize(IncrementalGeneratorInitializationContext context)
 	{
 		// Register a syntax provider that filters for class declarations with attributes
-		var channelClasses = context.SyntaxProvider
-			.CreateSyntaxProvider(
-				predicate: IsSyntaxTargetForGeneration, // Filter syntax nodes
-				transform: GetSemanticTargetForGeneration // Transform to semantic symbols
-			)
-			.Where(static classSymbol => classSymbol != null)!; // Filter out nulls
+		var channelTypes = context.SyntaxProvider
+			.ForAttributeWithMetadataName(
+				ChannelAttributeName,
+				(node, _) => node is ClassDeclarationSyntax or RecordDeclarationSyntax,
+				(context, _) => (INamedTypeSymbol)context.TargetSymbol
+			);
 
 		// Combine the compilation with the collected channel symbols
-		var compilationAndChannels = context.CompilationProvider.Combine(channelClasses.Collect());
+		var compilationAndChannels = context.CompilationProvider.Combine(channelTypes.Collect());
 
 		// Register the source output
 		context.RegisterSourceOutput(
 			compilationAndChannels,
-			(
-				spc,
-				source) => Execute(source.Left, source.Right, spc)
+			(spc, source) => Execute(source.Left, source.Right, spc)
 		);
-	}
-
-	/// <summary>
-	/// Predicate to identify candidate classes with attributes.
-	/// </summary>
-	private static bool IsSyntaxTargetForGeneration(
-		SyntaxNode node,
-		CancellationToken cancellationToken)
-	{
-		return node is ClassDeclarationSyntax classDeclaration &&
-		       classDeclaration.AttributeLists.Count > 0;
-	}
-
-	/// <summary>
-	/// Transforms a syntax node into a semantic symbol if it has attributes.
-	/// </summary>
-	private static INamedTypeSymbol? GetSemanticTargetForGeneration(
-		GeneratorSyntaxContext context,
-		CancellationToken cancellationToken)
-	{
-		var classDeclaration = (ClassDeclarationSyntax)context.Node;
-		var classSymbol = context.SemanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken) as INamedTypeSymbol;
-
-		if (classSymbol == null)
-			return null;
-
-		var channelAttributeSymbol = context.SemanticModel.Compilation.GetTypeByMetadataName(ChannelAttributeName);
-		if (channelAttributeSymbol == null)
-			return null;
-
-		// Check if the class has the ChannelAttribute using symbol comparison
-		foreach (var attribute in classSymbol.GetAttributes())
-		{
-			if (attribute.AttributeClass == null)
-				continue;
-
-			if (SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, channelAttributeSymbol))
-			{
-				return classSymbol;
-			}
-		}
-
-		return null;
 	}
 
 	/// <summary>
@@ -88,19 +52,16 @@ public sealed class ChannelGenerator : IIncrementalGenerator
 	/// </summary>
 	private static void Execute(
 		Compilation compilation,
-		ImmutableArray<INamedTypeSymbol?> channels,
+		ImmutableArray<INamedTypeSymbol> channels,
 		SourceProductionContext context)
 	{
+		context.ReportDiagnostic(Diagnostic.Create(ExecutionInfo, Location.None, "=== EXECUTING CHANNEL GENERATOR ==="));
+		context.ReportDiagnostic(Diagnostic.Create(ExecutionInfo, Location.None, $"Compilation: {compilation.AssemblyName}"));
+		context.ReportDiagnostic(Diagnostic.Create(ExecutionInfo, Location.None, $"Found {channels.Length} channel(s)"));
+
 		if (channels.IsDefaultOrEmpty)
-			return;
-
-		// Retrieve the ChannelAttribute symbol using fully qualified string name
-		var channelAttributeSymbol =
-			compilation.GetTypeByMetadataName(ChannelAttributeName);
-
-		if (channelAttributeSymbol == null)
 		{
-			// Attribute not found; nothing to generate
+			context.ReportDiagnostic(Diagnostic.Create(ExecutionInfo, Location.None, "No channels found"));
 			return;
 		}
 
@@ -109,21 +70,37 @@ public sealed class ChannelGenerator : IIncrementalGenerator
 
 		foreach (var classSymbol in channels.Distinct())
 		{
-			if (classSymbol == null)
-				continue;
+			context.ReportDiagnostic(Diagnostic.Create(ExecutionInfo, Location.None, $"Processing channel: {classSymbol.ToDisplayString()}"));
 
-			// Retrieve the ChannelAttribute data using symbol comparison
+			// Retrieve the ChannelAttribute data
 			var attributeData = classSymbol.GetAttributes()
-				.FirstOrDefault(ad => SymbolEqualityComparer.Default.Equals(ad.AttributeClass, channelAttributeSymbol));
+				.FirstOrDefault(ad => ad.AttributeClass?.ToDisplayString() == ChannelAttributeName);
 
 			if (attributeData == null)
+			{
+				context.ReportDiagnostic(Diagnostic.Create(ExecutionInfo, Location.None, $"No Channel attribute found on {classSymbol.ToDisplayString()}"));
 				continue;
+			}
+
+			if (attributeData.ConstructorArguments.Length == 0)
+			{
+				context.ReportDiagnostic(Diagnostic.Create(ExecutionInfo, Location.None, $"Invalid attribute arguments on {classSymbol.ToDisplayString()}"));
+				continue;
+			}
 
 			// Extract channel name from the ChannelAttribute
-			var channelName = attributeData.ConstructorArguments.Length > 0 ? attributeData.ConstructorArguments[0].Value as string : null;
+			var channelName = attributeData.ConstructorArguments[0].Value as string;
 
-			if (channelName is null)
+			if (string.IsNullOrEmpty(channelName))
+			{
+				context.ReportDiagnostic(Diagnostic.Create(ExecutionInfo, Location.None, $"Invalid channel name on {classSymbol.ToDisplayString()}"));
 				continue;
+			}
+
+			context.ReportDiagnostic(Diagnostic.Create(
+				ExecutionInfo, 
+				Location.None, 
+				$"Found valid channel: {classSymbol.ToDisplayString()} with channel: {channelName}"));
 
 			channelInfos.Add(
 				new ChannelInfo
@@ -135,7 +112,10 @@ public sealed class ChannelGenerator : IIncrementalGenerator
 		}
 
 		if (channelInfos.Count == 0)
+		{
+			context.ReportDiagnostic(Diagnostic.Create(ExecutionInfo, Location.None, "No valid channels found to generate code for"));
 			return;
+		}
 
 		// Generate the channel registration code
 		var sourceBuilder = new StringBuilder();
@@ -143,8 +123,12 @@ public sealed class ChannelGenerator : IIncrementalGenerator
 		AppendNamespace(sourceBuilder);
 		AppendClass(sourceBuilder, channelInfos);
 
+		var source = sourceBuilder.ToString();
+		context.ReportDiagnostic(Diagnostic.Create(ExecutionInfo, Location.None, $"Generated source for {channelInfos.Count} channel(s)"));
+
 		// Add the generated source to the compilation
-		context.AddSource($"{FileName}.g.cs", SourceText.From(sourceBuilder.ToString(), Encoding.UTF8));
+		context.AddSource($"{FileName}.g.cs", SourceText.From(source, Encoding.UTF8));
+		context.ReportDiagnostic(Diagnostic.Create(ExecutionInfo, Location.None, $"Added source file: {FileName}.g.cs"));
 	}
 
 	private static void AppendUsings(StringBuilder sourceBuilder)
