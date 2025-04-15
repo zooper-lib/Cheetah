@@ -230,7 +230,7 @@ public class ConsumerRegistrationGenerator : IIncrementalGenerator
 		sb.AppendLine();
 		sb.AppendLine($"public static class {ClassName}");
 		sb.AppendLine("{");
-		sb.AppendLine($"    public static void {MethodName}(IBusRegistrationConfigurator configurator)");
+		sb.AppendLine($"    public static void {MethodName}(this IBusRegistrationConfigurator configurator)");
 		sb.AppendLine("    {");
 
 		foreach (var info in consumerInfos)

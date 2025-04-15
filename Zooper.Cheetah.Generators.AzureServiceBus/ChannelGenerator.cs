@@ -173,7 +173,7 @@ public sealed class ChannelGenerator : IIncrementalGenerator
 		StringBuilder sourceBuilder,
 		List<ChannelInfo> channels)
 	{
-		sourceBuilder.AppendLine($"    public static void {MethodName}(IServiceBusBusFactoryConfigurator configurator)");
+		sourceBuilder.AppendLine($"    public static void {MethodName}(this IServiceBusBusFactoryConfigurator configurator)");
 		sourceBuilder.AppendLine("    {");
 		AppendChannelList(sourceBuilder, channels);
 		sourceBuilder.AppendLine("    }");
