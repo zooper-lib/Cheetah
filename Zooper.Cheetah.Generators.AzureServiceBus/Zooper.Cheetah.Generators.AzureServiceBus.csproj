@@ -10,7 +10,7 @@
 
         <RootNamespace>Zooper.Cheetah.Generators.AzureServiceBus</RootNamespace>
         <PackageId>Zooper.Cheetah.Generators.AzureServiceBus</PackageId>
-        <Version>1.0.0</Version>
+        <GeneratedNamespace>$(GeneratedNamespacePrefix).AzureServiceBus</GeneratedNamespace>
         <Authors>Your Name</Authors>
         <Description>Source generator for Azure Service Bus message handling</Description>
         <PackageTags>source-generator azure-service-bus</PackageTags>

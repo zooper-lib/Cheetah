@@ -14,7 +14,8 @@ namespace Zooper.Cheetah.Generators.AzureServiceBus;
 public sealed class ConsumerConnectionGenerator : IIncrementalGenerator
 {
 	private const string FileName = "MassTransitConsumerConnection";
-	private const string Namespace = "Zooper.Cheetah.Generators.AzureServiceBus";
+	private const string BaseNamespace = "Zooper.Cheetah.Integrations.AzureServiceBus";
+	private const string NamespaceSuffix = "Consumers";
 	private const string ClassName = "MassTransitConsumerConnection";
 	private const string MethodName = "ConfigureSubscriptions";
 	private const string ConsumerAttributeName = "Zooper.Cheetah.Attributes.ConsumerAttribute";
@@ -86,6 +87,10 @@ public sealed class ConsumerConnectionGenerator : IIncrementalGenerator
 			return;
 		}
 
+		// Get project namespace
+		string projectNamespace = GetFullNamespace();
+		context.ReportDiagnostic(Diagnostic.Create(ExecutionInfo, Location.None, $"Using namespace: {projectNamespace}"));
+
 		var consumerInfos = new List<ConsumerInfo>();
 
 		foreach (var consumer in consumers)
@@ -138,7 +143,7 @@ public sealed class ConsumerConnectionGenerator : IIncrementalGenerator
 
 		var sourceBuilder = new StringBuilder();
 		AppendUsings(sourceBuilder);
-		AppendNamespace(sourceBuilder);
+		AppendNamespace(sourceBuilder, projectNamespace);
 		AppendClass(sourceBuilder, consumerInfos);
 
 		var source = sourceBuilder.ToString();
@@ -146,6 +151,14 @@ public sealed class ConsumerConnectionGenerator : IIncrementalGenerator
 
 		context.AddSource($"{FileName}.g.cs", SourceText.From(source, Encoding.UTF8));
 		context.ReportDiagnostic(Diagnostic.Create(ExecutionInfo, Location.None, $"Added source file: {FileName}.g.cs"));
+	}
+
+	/// <summary>
+	/// Gets the full namespace for the generated code
+	/// </summary>
+	private static string GetFullNamespace()
+	{
+		return $"{BaseNamespace}.{NamespaceSuffix}";
 	}
 
 	private static void AppendUsings(StringBuilder sourceBuilder)
@@ -157,9 +170,9 @@ public sealed class ConsumerConnectionGenerator : IIncrementalGenerator
 		sourceBuilder.AppendLine();
 	}
 
-	private static void AppendNamespace(StringBuilder sourceBuilder)
+	private static void AppendNamespace(StringBuilder sourceBuilder, string projectNamespace)
 	{
-		sourceBuilder.AppendLine($"namespace {Namespace};");
+		sourceBuilder.AppendLine($"namespace {projectNamespace};");
 		sourceBuilder.AppendLine();
 	}
 

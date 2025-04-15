@@ -13,7 +13,8 @@ namespace Zooper.Cheetah.Generators.AzureServiceBus;
 public sealed class ChannelGenerator : IIncrementalGenerator
 {
 	private const string FileName = "MassTransitChannelRegistration";
-	private const string Namespace = "Zooper.Cheetah.Generators.AzureServiceBus";
+	private const string BaseNamespace = "Zooper.Cheetah.Integrations.AzureServiceBus";
+	private const string NamespaceSuffix = "Channels";
 	private const string ClassName = "MassTransitChannelRegistration";
 	private const string MethodName = "ConfigureChannels";
 	private const string ChannelAttributeName = "Zooper.Cheetah.Attributes.ChannelAttribute";
@@ -64,6 +65,10 @@ public sealed class ChannelGenerator : IIncrementalGenerator
 			context.ReportDiagnostic(Diagnostic.Create(ExecutionInfo, Location.None, "No channels found"));
 			return;
 		}
+
+		// Get project namespace from compilation
+		string projectNamespace = GetFullNamespace();
+		context.ReportDiagnostic(Diagnostic.Create(ExecutionInfo, Location.None, $"Using namespace: {projectNamespace}"));
 
 		// Collect all channel information
 		var channelInfos = new List<ChannelInfo>();
@@ -120,7 +125,7 @@ public sealed class ChannelGenerator : IIncrementalGenerator
 		// Generate the channel registration code
 		var sourceBuilder = new StringBuilder();
 		AppendUsings(sourceBuilder);
-		AppendNamespace(sourceBuilder);
+		AppendNamespace(sourceBuilder, projectNamespace);
 		AppendClass(sourceBuilder, channelInfos);
 
 		var source = sourceBuilder.ToString();
@@ -129,6 +134,14 @@ public sealed class ChannelGenerator : IIncrementalGenerator
 		// Add the generated source to the compilation
 		context.AddSource($"{FileName}.g.cs", SourceText.From(source, Encoding.UTF8));
 		context.ReportDiagnostic(Diagnostic.Create(ExecutionInfo, Location.None, $"Added source file: {FileName}.g.cs"));
+	}
+
+	/// <summary>
+	/// Gets the full namespace for the generated code
+	/// </summary>
+	private static string GetFullNamespace()
+	{
+		return $"{BaseNamespace}.{NamespaceSuffix}";
 	}
 
 	private static void AppendUsings(StringBuilder sourceBuilder)
@@ -140,9 +153,9 @@ public sealed class ChannelGenerator : IIncrementalGenerator
 		sourceBuilder.AppendLine();
 	}
 
-	private static void AppendNamespace(StringBuilder sourceBuilder)
+	private static void AppendNamespace(StringBuilder sourceBuilder, string projectNamespace)
 	{
-		sourceBuilder.AppendLine($"namespace {Namespace};");
+		sourceBuilder.AppendLine($"namespace {projectNamespace};");
 		sourceBuilder.AppendLine();
 	}
 
