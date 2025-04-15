@@ -1,7 +1,5 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zooper.Cheetah.Generators", "Zooper.Cheetah.Generators\Zooper.Cheetah.Generators.csproj", "{869333DF-4CC2-40C1-A372-F5D239B5AA3E}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zooper.Cheetah.Generators.Sample", "Zooper.Cheetah.Generators.Sample\Zooper.Cheetah.Generators.Sample.csproj", "{9C535F05-895F-4F35-8020-84E1887DA7C2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zooper.Cheetah.Attributes", "Zooper.Cheetah.Attributes\Zooper.Cheetah.Attributes.csproj", "{92E75C73-64B0-4F7F-8C71-38898A7B0C0E}"
@@ -16,10 +14,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{869333DF-4CC2-40C1-A372-F5D239B5AA3E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{869333DF-4CC2-40C1-A372-F5D239B5AA3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{869333DF-4CC2-40C1-A372-F5D239B5AA3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{869333DF-4CC2-40C1-A372-F5D239B5AA3E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{9C535F05-895F-4F35-8020-84E1887DA7C2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{9C535F05-895F-4F35-8020-84E1887DA7C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9C535F05-895F-4F35-8020-84E1887DA7C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
