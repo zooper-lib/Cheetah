@@ -11,7 +11,6 @@
         <RootNamespace>Zooper.Cheetah.Generators.AzureServiceBus</RootNamespace>
         <PackageId>Zooper.Cheetah.Generators.AzureServiceBus</PackageId>
         <GeneratedNamespace>$(GeneratedNamespacePrefix).AzureServiceBus</GeneratedNamespace>
-        <Authors>Your Name</Authors>
         <Description>Source generator for Azure Service Bus message handling</Description>
         <PackageTags>source-generator azure-service-bus</PackageTags>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -22,7 +21,7 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.13.0" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.13.0" PrivateAssets="all" />
         <PackageReference Include="MassTransit" Version="8.4.0">
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
@@ -34,11 +33,6 @@
             <IncludeAssets>all</IncludeAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </ProjectReference>
-<!--        <ProjectReference Include="..\Zooper.Cheetah.Generators\Zooper.Cheetah.Generators.csproj">-->
-<!--            <PrivateAssets>none</PrivateAssets>-->
-<!--            <IncludeAssets>all</IncludeAssets>-->
-<!--            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>-->
-<!--        </ProjectReference>-->
     </ItemGroup>
 
     <!-- This is required to include the analyzer in the package -->
