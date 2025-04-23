@@ -12,45 +12,42 @@ public class ReceiveEndpointSourceGenerator : IIncrementalGenerator
 {
 	public void Initialize(IncrementalGeneratorInitializationContext context)
 	{
-		// 1. Gather all types (records, classes, structs) annotated with EntityNameAttribute
+		// 1. Gather all types (including referenced assemblies) annotated with EntityNameAttribute
 		var eventProvider = context.CompilationProvider.Select((
 				comp,
 				ct) =>
 			{
 				var events = new List<(INamedTypeSymbol Symbol, string Name)>();
+				var entityAttr = comp.GetTypeByMetadataName("MassTransit.EntityNameAttribute");
+				if (entityAttr == null)
+					return events;
 
-				foreach (var tree in comp.SyntaxTrees)
+				void Collect(INamespaceSymbol ns)
 				{
-					var model = comp.GetSemanticModel(tree);
-					var root = tree.GetRoot();
-					// Find class, struct, and record declarations
-					var typeDecls = root.DescendantNodes().OfType<TypeDeclarationSyntax>();
-
-					foreach (var decl in typeDecls)
+					foreach (var type in ns.GetTypeMembers())
 					{
-						var sym = model.GetDeclaredSymbol(decl) as INamedTypeSymbol;
-						if (sym == null) continue;
+						var attr = type.GetAttributes().FirstOrDefault(a =>
+							SymbolEqualityComparer.Default.Equals(a.AttributeClass, entityAttr)
+						);
 
-						// Look for MassTransit.EntityNameAttribute
-						foreach (var attr in sym.GetAttributes())
+						if (attr != null && attr.ConstructorArguments.Length > 0)
 						{
-							if (attr.AttributeClass?.Name == "EntityNameAttribute" &&
-							    attr.ConstructorArguments.Length > 0)
-							{
-								var nameArg = attr.ConstructorArguments[0].Value as string;
-								if (!string.IsNullOrWhiteSpace(nameArg))
-									events.Add((sym, nameArg));
-								break;
-							}
+							var nameArg = attr.ConstructorArguments[0].Value as string;
+							if (!string.IsNullOrWhiteSpace(nameArg))
+								events.Add((type, nameArg));
 						}
 					}
+
+					foreach (var child in ns.GetNamespaceMembers())
+						Collect(child);
 				}
 
+				Collect(comp.GlobalNamespace);
 				return events;
 			}
 		);
 
-		// 2. Gather all consumers implementing MassTransit.IConsumer<TEvent>
+		// 2. Gather all consumers implementing MassTransit.IConsumer<TEvent> Gather all consumers implementing MassTransit.IConsumer<TEvent>
 		var consumerProvider = context.CompilationProvider.Select((
 				comp,
 				ct) =>
