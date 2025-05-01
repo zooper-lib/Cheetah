@@ -143,16 +143,16 @@ public class ReceiveEndpointSourceGenerator : IIncrementalGenerator
 
                         // Generate variable declarations for topic and subscription names with unique names
                         sb.AppendLine($"        // topic name for {evtSym.Name}");
-                        sb.AppendLine($"        var {topicVarName} = serviceName + \"{EndpointSeparator}{entityName}\";");
+                        sb.AppendLine($"        var {topicVarName} = \"{entityName}\";");
                         sb.AppendLine($"        // subscription name");
                         sb.AppendLine($"        var {subscriptionVarName} = serviceName + \"{SubscriptionSuffix}\";");
                         sb.AppendLine();
                         
-                        // Use the correct syntax for SubscriptionEndpoint
+                        // Use the correct syntax for SubscriptionEndpoint with correct parameter order
                         sb.AppendLine($"        cfg.SubscriptionEndpoint(");
-                        sb.AppendLine($"            {topicVarName},");
-                        sb.AppendLine($"            {subscriptionVarName},");
-                        sb.AppendLine($"            e =>"); // Using lambda directly without type specification
+                        sb.AppendLine($"            {subscriptionVarName},"); // First parameter is subscriptionName
+                        sb.AppendLine($"            {topicVarName},");       // Second parameter is topicPath
+                        sb.AppendLine($"            {ConfiguratorParamName} =>"); // Third parameter is configure Action
                         sb.AppendLine("            {");
                         
                         // Add dead letter configuration if enabled
