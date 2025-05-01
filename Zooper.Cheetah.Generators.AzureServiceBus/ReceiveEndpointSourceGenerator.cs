@@ -125,7 +125,7 @@ public class ReceiveEndpointSourceGenerator : IIncrementalGenerator
                 sb.AppendLine($"public static class {FileName}");
                 sb.AppendLine("{");
                 sb.AppendLine(
-                    $"    public static void {MethodName}(this IServiceBusBusFactoryConfigurator cfg, IRegistrationContext context, string serviceName, bool enableDeadLettering = true)"
+                    $"    public static void {MethodName}(this IServiceBusBusFactoryConfigurator cfg, IRegistrationContext context, string serviceName, bool enableDeadLettering = true, bool publishFaults = false)"
                 );
                 sb.AppendLine("    {");
 
@@ -141,28 +141,26 @@ public class ReceiveEndpointSourceGenerator : IIncrementalGenerator
                         string topicVarName = $"topicName{consumerCounter}";
                         string subscriptionVarName = $"subscriptionName{consumerCounter}";
 
-                        // Generate variable declarations for topic and subscription names with unique names
-                        sb.AppendLine($"        // topic name for {evtSym.Name}");
                         sb.AppendLine($"        var {topicVarName} = \"{entityName}\";");
-                        sb.AppendLine($"        // subscription name");
                         sb.AppendLine($"        var {subscriptionVarName} = serviceName + \"{SubscriptionSuffix}\";");
                         sb.AppendLine();
                         
-                        // Use the correct syntax for SubscriptionEndpoint with correct parameter order
                         sb.AppendLine($"        cfg.SubscriptionEndpoint(");
-                        sb.AppendLine($"            {subscriptionVarName},"); // First parameter is subscriptionName
-                        sb.AppendLine($"            {topicVarName},");       // Second parameter is topicPath
-                        sb.AppendLine($"            {ConfiguratorParamName} =>"); // Third parameter is configure Action
+                        sb.AppendLine($"            {subscriptionVarName},");
+                        sb.AppendLine($"            {topicVarName},");
+                        sb.AppendLine($"            {ConfiguratorParamName} =>");
                         sb.AppendLine("            {");
                         
-                        // Add dead letter configuration if enabled
-                        sb.AppendLine("                // send *skipped* messages to <subscription>/$ deadletterqueue");
-                        sb.AppendLine($"                {ConfiguratorParamName}.ConfigureDeadLetterQueueDeadLetterTransport();");
-                        sb.AppendLine("                // send *faulted* messages (after retries) to <subscription>/$ deadletterqueue");
-                        sb.AppendLine($"                {ConfiguratorParamName}.ConfigureDeadLetterQueueErrorTransport();");
+                        sb.AppendLine($"                {ConfiguratorParamName}.PublishFaults = publishFaults;");
                         sb.AppendLine();
                         
-                        // Configure consumer
+                        if (true) // keeping conditional for future use
+                        {
+                            sb.AppendLine($"                {ConfiguratorParamName}.ConfigureDeadLetterQueueDeadLetterTransport();");
+                            sb.AppendLine($"                {ConfiguratorParamName}.ConfigureDeadLetterQueueErrorTransport();");
+                            sb.AppendLine();
+                        }
+                        
                         sb.AppendLine($"                {ConfiguratorParamName}.Consumer<{consumerSym.ToDisplayString()}>(context);");
                         sb.AppendLine("            });");
                         sb.AppendLine();
