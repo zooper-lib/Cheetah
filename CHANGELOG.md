@@ -5,6 +5,13 @@ All notable changes to the Zooper.Cheetah project will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2025-05-01
+
+### Fixed
+- Fixed variable naming in generated endpoints to avoid duplicate declarations
+- Corrected SubscriptionEndpoint method signature in generated code
+- Added unique identifiers to variable names for multiple consumers
+
 ## [1.2.0] - 2025-05-01
 
 ### Added
@@ -14,9 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added optional parameter `enableDeadLettering` (defaults to true) to control dead letter functionality
 
 ### Changed
+- Changed generated endpoint code to use `SubscriptionEndpoint<T>` instead of `ReceiveEndpoint`
+  - Improved clarity with named variables for topic and subscription names
+  - Added comments to explain the purpose of each configuration section
+- Renamed the generated extension class from `ReceiveEndpointExtensions` to `MassTransitExtensions`
 - Refactored `ReceiveEndpointSourceGenerator` to remove magic strings, improving code maintainability
   - Extracted string constants for namespace names, file names, and other parameters
-  - Set proper value for `FileName` constant as "ReceiveEndpointExtensions"
+  - Set proper value for `FileName` constant as "MassTransitExtensions"
 
 ## [1.1.0] - 2025.04.23
 
