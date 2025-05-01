@@ -10,13 +10,23 @@ namespace Zooper.Cheetah.Generators.AzureServiceBus;
 [Generator]
 public class ReceiveEndpointSourceGenerator : IIncrementalGenerator
 {
+    private const string FileName = "ReceiveEndpointExtensions";
+    private const string MethodName = "AddIntegrationEndpoints";
+    private const string MassTransitNamespace = "MassTransit";
+    private const string EntityNameAttributeMetadataName = "MassTransit.EntityNameAttribute";
+    private const string ConsumerInterfaceMetadataName = "MassTransit.IConsumer`1";
+    private const string GeneratedNamespace = "Zooper.Cheetah.AzureServiceBus.Generated";
+    private const string EndpointSeparator = "-";
+    private const string SubscriptionSuffix = "-subscription";
+    private const string FileExtension = ".g.cs";
+
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         // 1. Gather all types (including nested types and referenced assemblies) annotated with EntityNameAttribute
         var eventProvider = context.CompilationProvider.Select((comp, cancellationToken) =>
         {
             var events = new List<(INamedTypeSymbol Symbol, string Name)>();
-            var entityAttr = comp.GetTypeByMetadataName("MassTransit.EntityNameAttribute");
+            var entityAttr = comp.GetTypeByMetadataName(EntityNameAttributeMetadataName);
             if (entityAttr == null)
                 return events;
 
@@ -51,7 +61,7 @@ public class ReceiveEndpointSourceGenerator : IIncrementalGenerator
         var consumerProvider = context.CompilationProvider.Select((comp, cancellationToken) =>
         {
             var consumers = new List<(INamedTypeSymbol Consumer, INamedTypeSymbol Event)>();
-            var consumerIface = comp.GetTypeByMetadataName("MassTransit.IConsumer`1");
+            var consumerIface = comp.GetTypeByMetadataName(ConsumerInterfaceMetadataName);
             if (consumerIface == null)
                 return consumers;
 
@@ -90,7 +100,7 @@ public class ReceiveEndpointSourceGenerator : IIncrementalGenerator
                 if (!events.Any()) return;
 
                 // Collect namespaces for using directives
-                var nsSet = new HashSet<string> { "MassTransit" };
+                var nsSet = new HashSet<string> { MassTransitNamespace };
                 foreach (var (evtSym, _) in events)
                 {
                     var ns = evtSym.ContainingNamespace;
@@ -109,12 +119,12 @@ public class ReceiveEndpointSourceGenerator : IIncrementalGenerator
                     sb.AppendLine($"using {ns};");
 
                 sb.AppendLine();
-                sb.AppendLine("namespace Zooper.Cheetah.AzureServiceBus.Generated;");
+                sb.AppendLine($"namespace {GeneratedNamespace};");
                 sb.AppendLine();
-                sb.AppendLine("public static class MassTransitExtensions");
+                sb.AppendLine($"public static class {FileName}");
                 sb.AppendLine("{");
                 sb.AppendLine(
-                    "    public static void AddIntegrationEndpoints(this IServiceBusBusFactoryConfigurator cfg, IRegistrationContext context, string serviceName)"
+                    $"    public static void {MethodName}(this IServiceBusBusFactoryConfigurator cfg, IRegistrationContext context, string serviceName, bool enableDeadLettering = true)"
                 );
                 sb.AppendLine("    {");
 
@@ -123,11 +133,16 @@ public class ReceiveEndpointSourceGenerator : IIncrementalGenerator
                     var matched = consumers.Where(c => SymbolEqualityComparer.Default.Equals(c.Event, evtSym));
                     foreach (var (consumerSym, _) in matched)
                     {
-                        sb.AppendLine($"        cfg.ReceiveEndpoint(serviceName + \"-{entityName}\", e =>");
+                        sb.AppendLine($"        cfg.ReceiveEndpoint(serviceName + \"{EndpointSeparator}{entityName}\", e =>");
                         sb.AppendLine("        {");
                         sb.AppendLine("            e.ConfigureConsumeTopology = false;");
                         sb.AppendLine($"            e.ConfigureConsumer<{consumerSym.ToDisplayString()}>(context);");
-                        sb.AppendLine($"            e.Subscribe<{evtSym.ToDisplayString()}>(serviceName + \"-subscription\");");
+                        sb.AppendLine($"            e.Subscribe<{evtSym.ToDisplayString()}>(serviceName + \"{SubscriptionSuffix}\");");
+                        sb.AppendLine("            if (enableDeadLettering)");
+                        sb.AppendLine("            {");
+                        sb.AppendLine("                e.ConfigureDeadLetterQueueDeadLetterTransport();");
+                        sb.AppendLine("                e.ConfigureDeadLetterQueueErrorTransport();");
+                        sb.AppendLine("            }");
                         sb.AppendLine("        });");
                         sb.AppendLine();
                     }
@@ -136,7 +151,7 @@ public class ReceiveEndpointSourceGenerator : IIncrementalGenerator
                 sb.AppendLine("    }");
                 sb.AppendLine("}");
 
-                spc.AddSource("MassTransitExtensions.g.cs", SourceText.From(sb.ToString(), Encoding.UTF8));
+                spc.AddSource($"{FileName}{FileExtension}", SourceText.From(sb.ToString(), Encoding.UTF8));
             }
         );
     }
