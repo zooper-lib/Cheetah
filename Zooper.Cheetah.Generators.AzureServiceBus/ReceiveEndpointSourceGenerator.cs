@@ -10,7 +10,7 @@ namespace Zooper.Cheetah.Generators.AzureServiceBus;
 [Generator]
 public class ReceiveEndpointSourceGenerator : IIncrementalGenerator
 {
-    private const string FileName = "ReceiveEndpointExtensions";
+    private const string FileName = "MassTransitExtensions";
     private const string MethodName = "AddIntegrationEndpoints";
     private const string MassTransitNamespace = "MassTransit";
     private const string EntityNameAttributeMetadataName = "MassTransit.EntityNameAttribute";
@@ -19,6 +19,7 @@ public class ReceiveEndpointSourceGenerator : IIncrementalGenerator
     private const string EndpointSeparator = "-";
     private const string SubscriptionSuffix = "-subscription";
     private const string FileExtension = ".g.cs";
+    private const string ConfiguratorParamName = "e";
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -128,22 +129,42 @@ public class ReceiveEndpointSourceGenerator : IIncrementalGenerator
                 );
                 sb.AppendLine("    {");
 
+                // Generate unique counter for each consumer-event pair
+                int consumerCounter = 0;
+
                 foreach (var (evtSym, entityName) in events)
                 {
                     var matched = consumers.Where(c => SymbolEqualityComparer.Default.Equals(c.Event, evtSym));
                     foreach (var (consumerSym, _) in matched)
                     {
-                        sb.AppendLine($"        cfg.ReceiveEndpoint(serviceName + \"{EndpointSeparator}{entityName}\", e =>");
-                        sb.AppendLine("        {");
-                        sb.AppendLine("            e.ConfigureConsumeTopology = false;");
-                        sb.AppendLine($"            e.ConfigureConsumer<{consumerSym.ToDisplayString()}>(context);");
-                        sb.AppendLine($"            e.Subscribe<{evtSym.ToDisplayString()}>(serviceName + \"{SubscriptionSuffix}\");");
-                        sb.AppendLine("            if (enableDeadLettering)");
+                        consumerCounter++;
+                        string topicVarName = $"topicName{consumerCounter}";
+                        string subscriptionVarName = $"subscriptionName{consumerCounter}";
+
+                        // Generate variable declarations for topic and subscription names with unique names
+                        sb.AppendLine($"        // topic name for {evtSym.Name}");
+                        sb.AppendLine($"        var {topicVarName} = serviceName + \"{EndpointSeparator}{entityName}\";");
+                        sb.AppendLine($"        // subscription name");
+                        sb.AppendLine($"        var {subscriptionVarName} = serviceName + \"{SubscriptionSuffix}\";");
+                        sb.AppendLine();
+                        
+                        // Use the correct syntax for SubscriptionEndpoint
+                        sb.AppendLine($"        cfg.SubscriptionEndpoint(");
+                        sb.AppendLine($"            {topicVarName},");
+                        sb.AppendLine($"            {subscriptionVarName},");
+                        sb.AppendLine($"            e =>"); // Using lambda directly without type specification
                         sb.AppendLine("            {");
-                        sb.AppendLine("                e.ConfigureDeadLetterQueueDeadLetterTransport();");
-                        sb.AppendLine("                e.ConfigureDeadLetterQueueErrorTransport();");
-                        sb.AppendLine("            }");
-                        sb.AppendLine("        });");
+                        
+                        // Add dead letter configuration if enabled
+                        sb.AppendLine("                // send *skipped* messages to <subscription>/$ deadletterqueue");
+                        sb.AppendLine($"                {ConfiguratorParamName}.ConfigureDeadLetterQueueDeadLetterTransport();");
+                        sb.AppendLine("                // send *faulted* messages (after retries) to <subscription>/$ deadletterqueue");
+                        sb.AppendLine($"                {ConfiguratorParamName}.ConfigureDeadLetterQueueErrorTransport();");
+                        sb.AppendLine();
+                        
+                        // Configure consumer
+                        sb.AppendLine($"                {ConfiguratorParamName}.Consumer<{consumerSym.ToDisplayString()}>(context);");
+                        sb.AppendLine("            });");
                         sb.AppendLine();
                     }
                 }
